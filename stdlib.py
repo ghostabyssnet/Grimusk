@@ -1,29 +1,18 @@
-import random
-import grimuskbase as g
+import processingunit as g
+# ----------
+# operations
+# ----------
 
-# applies random values to a grimusk machine's ram
-def apply_ram(ram_size):
-	x = 0
-	ret = []
-	while (x < ram_size):
-		ret.append(random.randint(0, 128)) 
-		x += 1
-	return ret
+# grimusk pretty much writes programs by itself by now
 
-# args: RAM_SIZE && length of opcode enum 
-def apply_instr(ram_size, i_size):
-	x = 0
-	i_size = i_size.value
-	ret = []
-	z = 0
-	while (z < ram_size):
-		ret.append(0)
-		z += 1
-	while (x < ram_size):
-		one = []
-		one.append(random.randint(0, i_size))
-		for y in range(1, 4):
-			one.append(random.randint(0, 16))
-		ret[x] = one 
-		x += 1
-	return ret
+def _xsm(instr, ram, cpu):
+	
+
+def _xnd(instr, ram):
+	# closer to old C64 assembly: if x - y = 0, they're equal
+	# yes, x - (-y) will be x + y, however, negative numbers in binary
+	# are set by having 1 as their first term ((10000001) = -(00000001))
+	# and there are other checks to ensure things go as planned
+	g._subbuf()
+	
+def _bol(instr, ram):

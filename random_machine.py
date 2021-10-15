@@ -1,5 +1,5 @@
 import random
-import grimuskbase as g
+import processingunit as g
 
 # applies random values to a grimusk machine's ram
 def apply_ram(ram_size):
