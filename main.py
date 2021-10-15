@@ -12,6 +12,7 @@ import stdlib as std
 # TODO:
 # opcodes
 # 	[x] 5
+# 	 	[ ] mul(0), mul(1)
 # 	[ ] 6
 # 	[ ] 7
 # 	[ ] 8
