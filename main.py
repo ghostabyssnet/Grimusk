@@ -12,27 +12,28 @@ import stdlib as std
 # TODO:
 # opcodes
 # 	[x] 5
-# 	 	[ ] mul(0), mul(1)
+# 	 	[x] mul(0), mul(1)
 # 	[x] 6
-# 	 	[ ] div(0), div(1)
-# 	[ ] 7 AND
-# 	[ ] 8 XOR 
-# 	[ ] 9 NOT
-# 	[ ] 10 MOV
-# 	[ ] 11 BGR 
-# 	[ ] 12 SMR
-# 	[ ] 13 JMP
-# 	[ ] 14
+# 	 	[x] div(0), div(1)
+# 	[x] 8
+# 	[x] 9
+# 	[x] 10
+# 	[x] 11
+# 	[x] 12
+# 	[x] 13
+# 	[x] 14
 # 	[ ] 15
 # 	[ ] 16
-# [ ] NOT is pipelined
-# [ ] LDA is pipelined
+# 	[ ] 17
+# [x] LDA is pipelined (c64 asm)
 # [ ] save log to file
 # [x] load from file
 # [x] tests
+# [ ] ignore csv comments
 # [ ] implement AC
 # [ ] halt throws to menu
-# [ ] program writer
+# [ ] write sample programs
+# [ ] grimusk program writer
 # [ ] G language
 # [ ] i/o
 # [ ] visualizer
@@ -57,23 +58,33 @@ class opcode(enum.Enum):
 	AND = 7 # x and y (x == y)
 	XOR = 8 # x or y (x != y)
 	NOT = 9 # not(x)
-	MOV = 10 # to be implemented with mem. caches: moves data between two registers
+	MOV = 10 # to be implemented with memory caches: moves data between two registers
 	BGR = 11 # is bigger
 	SMR = 12 # is smaller
-	JMP = 13 # jump, basically GOTO
+	JIF = 13 # jump if -- basically an easier implementation of JN (jump on negative) and JZ (jump on zero)
+	JMP = 14 # jump, basically GOTO
 	
 	# everything below is from stdlib
-	CHR = 14 # putchar()
-	FIB = 15 # fibonacci
-	POW = 16 # power of x
-	SQR = 17 # square root (sqrt)
-	QRT = 18 # Q_sqrt or fast inverse square root
-	XSM = 19 # c64 sum: sum closer to how it is in assembly
-	XSB = 20 # c64 sub: sub closer to how it is in assembly
-	XND = 21 # c64 and: written closer to assembly
+	SWP = 15 # uses AC to swap two values between themselves
+	FIB = 16 # fibonacci
+	POW = 17 # power of x
+	SQR = 18 # square root (sqrt)
+	QRT = 19 # Q_sqrt or fast inverse square root
+	ARR = 20 # allocates array at x with size y (next y addresses are part of it)
+	
+	# stdlib C64 (commodore 64) assembly emulator 
+	XLD = 21 # c64 lda closer to how it is in assembly
+	XST = 22 # c64 sta closer to how it is in assembly
+	XSM = 23 # c64 sum closer to how it is in assembly
+	XSB = 24 # c64 sub closer to how it is in assembly
+	# XND = 25 -- we'll continue c64 if there's any interest on it
+	
+	# stdlib: stdio
+	CHR = 25 # putchar()
+	INP = 26 # input()
 	
 	# ------------------------------------------
-	LEN = 21 # length of opcode, used internally
+	LEN = 24 # length of opcode, used internally
 	# ------------------------------------------
 
 # note to programmers:
@@ -93,17 +104,22 @@ def to_opcode(text):
 	elif text == "MOV": return 10
 	elif text == "BGR": return 11
 	elif text == "SMR": return 12
-	elif text == "JMP": return 13
-	elif text == "CHR": return 14
-	elif text == "FIB": return 15
-	elif text == "POW": return 16
-	elif text == "SQR": return 17
-	elif text == "QRT": return 18
-	elif text == "XSM": return 19
-	elif text == "XSB": return 20
-	elif text == "XND": return 21
+	elif text == "JIF": return 13
+	elif text == "JMP": return 14
+	elif text == "SWP": return 15
+	elif text == "FIB": return 16
+	elif text == "POW": return 17
+	elif text == "SQR": return 18
+	elif text == "QRT": return 19
+	elif text == "ARR": return 20
+	elif text == "XLD": return 21
+	elif text == "XST": return 22
+	elif text == "XSM": return 23
+	elif text == "XSB": return 24
+	elif text == "CHR": return 25
+	elif text == "INP": return 26
 	else:
-		print('Invalid input file!')
+		print('Invalid input: ', text, '. Aborting!')
 		quit()
 
 # -------
@@ -149,6 +165,7 @@ class ram_t(): # ram struct
 class cpu_t(): # cpu struct
 	pc = 0
 	ac = 0
+	mq = 0
 	mbr = []
 	
 # TODO: evaluates instruction (void)

@@ -66,8 +66,8 @@ class cpu_prototype():
 MAR = 0
 
 # MQ: MUL/DIV quotient register
-# (unused for now, let's suppose our machine is very, very stupid)
-MQ = 0
+# used on _mul, _div (embed)
+# MQ is defined in <main> (object cpu_t())
 
 # MBR: memory buffer register
 # MBR is defined in <main> (object cpu_t())
