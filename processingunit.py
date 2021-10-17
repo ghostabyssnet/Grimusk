@@ -109,14 +109,17 @@ def _stabuf(value, addr, ram): # STA_BUFFER, same as _sta, used internally
 	
 # we ommit MAR from now onwards, you get the idea
 	
-def _lda(instr, ram):
-	instr[1] = ram.data[instr[2]] # retrieved
-	if LOG_CONSOLE: print('LDA called: value ', instr[1], ' loaded from addr[', instr[2], ']')
+def _lda(instr, ram, cpu):
+	cpu.ac = ram.data[instr[1]] # retrieved
+	if LOG_CONSOLE: print('LDA called: value ', ac, ' loaded from addr[', instr[1], ']')
 
 def _ldabuf(addr, ram): # LDA_BUFFER, ditto
 	return ram.data[addr]
 	if LOG_CONSOLE: print('LDA called: value ', ram.data[addr], ' loaded from addr[', addr, ']')
-	
+
+def _lda_ac(value, cpu): # LDA_BUFFER but to AC
+	cpu.ac = addr
+
 # we could also use to_sta and to_lda instead of stabuf and ldabuf, it would be slightly more realistic but
 # I think it's a bit overkill. I'm keeping this here just in case, though
 
@@ -125,17 +128,28 @@ def _ldabuf(addr, ram): # LDA_BUFFER, ditto
 #	instr[1] = value
 #	return instr
 
-def _sum(instr, ram):
+def _sum(instr, ram, cpu): # SUM between two numbers
+	_lda_ac(ram.data[instr[1]], cpu) # sends instr[1] to AC
+	_lda_ac((cpu.ac + ram.data[instr[2]]), cpu) # adds instr[2] and stores in AC
+	if LOG_CONSOLE: print('SUM called: ', ram.data[instr[1]], '[', instr[1], '] + ', ram.data[instr[2]], '[', instr[2], '] = ', cpu.ac, '[', instr[3], ']')
+
+def _sumbuf(x, y, addr, ram): # SUM_BUFFER
+	_stabuf((x + y), addr, ram)
+
+def __sum(instr, ram): # SUM as it's done by our professor. deprecated because it's not really keen to pipelining
+	# we did try, though. see below for a half-half solution that uses _stabuf to store stuff
 	ram_value_a = _ldabuf(instr[1], ram)
 	ram_value_b = _ldabuf(instr[2], ram)
 	result = ram_value_a + ram_value_b
 	_stabuf(result, instr[3], ram) # saves our variable by calling STA instead of doing so by itself
 	if LOG_CONSOLE: print('SUM called: ', ram_value_a, '[', instr[1], '] + ', ram_value_b, '[', instr[2], '] = ', result, '[', instr[3], ']')
 
-def _sumbuf(x, y, addr, ram): # SUM_BUFFER
-	_stabuf((x + y), addr, ram)
-
 def _sub(instr, ram):
+	_lda_ac(ram.data[instr[1]], cpu) # sends instr[1] to AC
+	_lda_ac((cpu.ac - ram.data[instr[2]]), cpu) # adds instr[2] and stores in AC
+	if LOG_CONSOLE: print('SUB called: ', ram.data[instr[1]], '[', instr[1], '] - ', ram.data[instr[2]], '[', instr[2], '] = ', cpu.ac, '[', instr[3], ']')
+	
+def __sub(instr, ram): # same issue as SUM. deprecated, but usable anyway
 	ram_value_a = _ldabuf(instr[1], ram)
 	ram_value_b = _ldabuf(instr[2], ram)
 	result = ram_value_a - ram_value_b

@@ -1,13 +1,22 @@
 import processingunit as g
+import embed as e
 
 # ----------
 # operations
 # ----------
 
 # grimusk pretty much writes programs by itself by now
+# our functions soft-pipeline themselves
 
+# SWP: swap values between themselves using AC
+def _swp(instr, ram, cpu):
+	g._lda(instr, ram, cpu) # loads instr[1] to AC
+	g._stabuf(ram.data[instr[2]], instr[1], ram) # sets data at [1] to data from [2]
+	g._stabuf(cpu.ac, instr[2], ram) # sets data at [2] to data from AC
 
-
+# FIB: fibonacci instr[1] to instr[2]
+def _fib(instr, ram):
+	e._and()
 
 
 

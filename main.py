@@ -48,7 +48,7 @@ class opcode(enum.Enum):
 	# base commands
 	HLT = 0 # halt
 	STA = 1 # store (move to RAM)
-	LDA = 2 # load (from RAM)
+	LDA = 2 # load (from RAM) to CPU AC
 	SUM = 3 # add
 	SUB = 4 # subtract
 	
@@ -79,12 +79,42 @@ class opcode(enum.Enum):
 	XSB = 24 # c64 sub closer to how it is in assembly
 	# XND = 25 -- we'll continue c64 if there's any interest on it
 	
-	# stdlib: stdio
+	# everything below is from muskOS
+	# stdio
 	CHR = 25 # putchar()
 	INP = 26 # input()
+	SAV = 27 # save to disk x
+	LOD = 28 # load from disk x
+	AUD = 29 # play audio from addr
 	
+	# muskOS std
+	COMPILE = 30 # compile .g program
+	DISKPART = 31 # do diskpart a-la windows
+	BOOT = 32 # boot muskOS
+	SHUTDOWN = 33 # shutdown muskOS
+	# note to professor: we want muskOS to do caching instead of grimusk itself, 
+	# as unix/linux/macOS/windows generally does
+	# let's ask him
+	MALLOC = 34 # malloc from addr1 to addr2 name [3] (allocates (addr1+addr2)-1 bytes)
+	# addr1: [3]
+	# addr1+1 to addr2: mallocd
+	FREE = 35 # free from addr1 to addr3
+	IF = 36 # JIF renamed
+	ELSE = 37 #notJIF
+	ABORT = 38 # abort program
+	TAB = 39 # change tab to x
+	CALL = 40 # better JMP/JIF implementation, used in every ASM distribution
+	DEF = 41 # defines variable
+	SEGFAULT = 42 # segmentation fault
+	AMOGUS = 43 # amogus
+	AMOGAME = 44 # amogus game
+	PRNSCR = 45 # print screen
+	BIN = 46 # tobinary
+	HEX = 47 # tohex
+	CHR = 48 # tochar
+	# KERNELPANIC = 49
 	# ------------------------------------------
-	LEN = 24 # length of opcode, used internally
+	LEN = 48 # length of opcode, used internally
 	# ------------------------------------------
 
 # note to programmers:
