@@ -90,6 +90,10 @@ def _qrt(instr, ram, cpu):
 	g._lda_ac(1597463007, cpu) # magic number constant 0x5F3759DF
 	g._lda_ac((cpu.ac - (cpu.ac / 2)), cpu) # what the fuck?
 	g._lda_ac((cpu.ac * 1.5 - ((ram.data[instr[1]] * 0.5) * cpu.ac * cpu.ac)))
+	
+def _arr(instr, ram, cpu):
+	
+	
 
 # -------
 # c64 asm
