@@ -118,7 +118,7 @@ def _ldabuf(addr, ram): # LDA_BUFFER, ditto
 	if LOG_CONSOLE: print('LDA called: value ', ram.data[addr], ' loaded from addr[', addr, ']')
 
 def _lda_ac(value, cpu): # LDA_BUFFER but to AC
-	cpu.ac = addr
+	cpu.ac = value
 
 # we could also use to_sta and to_lda instead of stabuf and ldabuf, it would be slightly more realistic but
 # I think it's a bit overkill. I'm keeping this here just in case, though
@@ -135,6 +135,9 @@ def _sum(instr, ram, cpu): # SUM between two numbers
 
 def _sumbuf(x, y, addr, ram): # SUM_BUFFER
 	_stabuf((x + y), addr, ram)
+	
+def _sum_ac(value, value, cpu): # SUM_BUFFER to AC
+	_lda_ac(value + value)
 
 def __sum(instr, ram): # SUM as it's done by our professor. deprecated because it's not really keen to pipelining
 	# we did try, though. see below for a half-half solution that uses _stabuf to store stuff

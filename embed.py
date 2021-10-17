@@ -33,8 +33,8 @@ def _mul(instr, ram, cpu):
 		if ram.data[instr[2]] == 1:
 			g._stabuf(ram.data[instr[1]], instr[3], ram)
 			return
+	cpu.mq += 1
 	if (ram.data[instr[2]] <= cpu.mq):
-		cpu.mq += 1
 		old = cpu.ac
 		g._sum(instr, ram, cpu) # adds 1 and 2, stores in AC
 		if g.LOG_CONSOLE: print('MUL called: ', old, ' + ', ram.data[instr[1]], ' = ', cpu.ac, '. (', ram.data[instr[2]], ' remaining)')
@@ -56,8 +56,8 @@ def _div(instr, ram, cpu):
 		if ram.data[instr[2]] == 1:
 			g._stabuf(ram.data[instr[1]], cpu.ac, ram)
 			return
+	cpu.mq += 1
 	if (cpu.ac >= ram.data[instr[2]]):
-		cpu.mq += 1
 		old = cpu.ac
 		g._sub(instr, ram, cpu) # reduces 1 by 2, stores in AC
 		if g.LOG_CONSOLE: print('DIV called: ', old, ' - ', ram.data[instr[2]], ' = ', cpu.ac, '.')

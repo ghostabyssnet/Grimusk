@@ -100,7 +100,7 @@ class opcode(enum.Enum):
 	# addr1+1 to addr2: mallocd
 	FREE = 35 # free from addr1 to addr3
 	IF = 36 # JIF renamed
-	ELSE = 37 #notJIF
+	ELSE = 37 # notJIF
 	ABORT = 38 # abort program
 	TAB = 39 # change tab to x
 	CALL = 40 # better JMP/JIF implementation, used in every ASM distribution
