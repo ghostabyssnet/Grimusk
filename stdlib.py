@@ -79,6 +79,26 @@ def _sqr(instr, ram, cpu):
 	else:
 		cpu.mq = 0
 
+
+# convert to const char
+# used to define constant system variables like array heads
+# opcode, targetaddr, 0, 0, 0
+def _chr(instr, ram, cpu):
+	g._stabuf("__const", instr[1], ram) # saves __const into addr[1]
+	# we could convert this to binary or int and add flags to make it more realistic but why bother
+
+# defines a new array
+# uses n + 2 bytes as addresses (yes, this is not as optimized as computers nowadays)
+# [__const, SIZEOF, n0, n1, n2... n]
+# of course we have malloc to use this properly later on, as the C language did (eventually)
+# opcode, start_addr, size, 0, 1
+def _arr(instr, ram, cpu):
+	if cpu.mq = 0: # using cpu.mq because we don't have access to other registers yet (TP2?)
+		_chr(instr, ram, cpu) # store __const to start_addr
+		g._lda_ac(0) # set AC to 0
+	if cpu.mq <= 
+
+
 # note to professor:
 # there's absolutely no way to do this fully in assembly until
 # the time to give you the assignment, sorry
@@ -90,10 +110,6 @@ def _qrt(instr, ram, cpu):
 	g._lda_ac(1597463007, cpu) # magic number constant 0x5F3759DF
 	g._lda_ac((cpu.ac - (cpu.ac / 2)), cpu) # what the fuck?
 	g._lda_ac((cpu.ac * 1.5 - ((ram.data[instr[1]] * 0.5) * cpu.ac * cpu.ac)))
-	
-def _arr(instr, ram, cpu):
-	
-	
 
 # -------
 # c64 asm

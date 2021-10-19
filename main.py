@@ -29,6 +29,7 @@ import stdlib as std
 # [ ] save log to file
 # [x] load from file
 # [x] tests
+# [ ] error when trying to alloc > MAX_RAM
 # [ ] ignore csv comments
 # [ ] implement AC
 # [ ] halt throws to menu
@@ -69,7 +70,8 @@ class opcode(enum.Enum):
 	FIB = 16 # fibonacci
 	POW = 17 # power of x
 	SQR = 18 # square root (sqrt)
-	QRT = 19 # Q_sqrt or fast inverse square root
+	# QRT = 19 # Q_sqrt or fast inverse square root
+	CHR = 19 # convert to constchar (used in const vars and array heads)
 	ARR = 20 # allocates array at x with size y (next y addresses are part of it)
 	
 	# stdlib C64 (commodore 64) assembly emulator 
@@ -81,7 +83,7 @@ class opcode(enum.Enum):
 	
 	# everything below is from muskOS
 	# stdio
-	CHR = 25 # putchar()
+	PCR = 25 # putchar()
 	INP = 26 # input()
 	SAV = 27 # save to disk x
 	LOD = 28 # load from disk x
@@ -140,13 +142,13 @@ def to_opcode(text):
 	elif text == "FIB": return 16
 	elif text == "POW": return 17
 	elif text == "SQR": return 18
-	elif text == "QRT": return 19
+	elif text == "CHR": return 19
 	elif text == "ARR": return 20
 	elif text == "XLD": return 21
 	elif text == "XST": return 22
 	elif text == "XSM": return 23
 	elif text == "XSB": return 24
-	elif text == "CHR": return 25
+	elif text == "PCR": return 25
 	elif text == "INP": return 26
 	else:
 		print('Invalid input: ', text, '. Aborting!')
