@@ -96,6 +96,7 @@ def _arr(instr, ram, cpu):
 	if cpu.mq = 0: # using cpu.mq because we don't have access to other registers yet (TP2?)
 		_chr(instr, ram, cpu) # store __const to start_addr
 		g._lda_ac(0) # set AC to 0
+		
 	if cpu.mq <= 
 
 
