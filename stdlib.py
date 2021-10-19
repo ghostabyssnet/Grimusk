@@ -94,11 +94,16 @@ def _chr(instr, ram, cpu):
 # opcode, start_addr, size, 0, 1
 def _arr(instr, ram, cpu):
 	if cpu.mq = 0: # using cpu.mq because we don't have access to other registers yet (TP2?)
-		_chr(instr, ram, cpu) # store __const to start_addr
-		g._lda_ac(0) # set AC to 0
-		
-	if cpu.mq <= 
-
+		_chr(instr, ram, cpu) # store __const to start_addr (addr[0])
+		g._stabuf(ram.data[instr[2]], (instr[1] + 1), ram) # sets addr[1] as SIZEOF 
+		g._lda_ac(instr[1] + 2) # set AC to address[n + 2], after __const and SIZEOF
+	cpu.mq += 1
+	if cpu.mq <= ram.data[instr[2]]:
+		g._stabuf(0, cpu.ac, ram) # store 0 into addr[AC]
+		g._sum_ac(ac, 1, cpu) # adds 1 to AC
+		_arr(instr, ram, cpu) # calls itself recursively until it fills the array
+	else:
+		cpu.mq = 0
 
 # note to professor:
 # there's absolutely no way to do this fully in assembly until
