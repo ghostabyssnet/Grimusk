@@ -63,7 +63,7 @@ def _pow(instr, ram, cpu):
 # using the CORDIC method:
 # https://www.convict.lu/Jeunes/Math/square_root_CORDIC.htm
 def _sqr(instr, ram, cpu):
-	if cpu.mq = 0:
+	if cpu.mq == 0:
 		g._stabuf(128, (instr[2] + 1), ram)
 		g._stabuf(0, (instr[2] + 2), ram)
 	cpu.mq += 1
@@ -93,7 +93,7 @@ def _chr(instr, ram, cpu):
 # of course we have malloc to use this properly later on, as the C language did (eventually)
 # opcode, start_addr, size, 0, 1
 def _arr(instr, ram, cpu):
-	if cpu.mq = 0: # using cpu.mq because we don't have access to other registers yet (TP2?)
+	if cpu.mq == 0: # using cpu.mq because we don't have access to other registers yet (TP2?)
 		_chr(instr, ram, cpu) # store __const to start_addr (addr[0])
 		g._stabuf(ram.data[instr[2]], (instr[1] + 1), ram) # sets addr[1] as SIZEOF 
 		g._lda_ac(instr[1] + 2) # set AC to address[n + 2], after __const and SIZEOF

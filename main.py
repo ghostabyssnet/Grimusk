@@ -141,7 +141,7 @@ class opcode(enum.Enum):
 	PRNSCR = 45 # print screen
 	BIN = 46 # tobinary
 	HEX = 47 # tohex
-	CHR = 48 # tochar
+	STR = 48 # tostring
 	# KERNELPANIC = 49
 	# ------------------------------------------
 	LEN = 48 # length of opcode, used internally

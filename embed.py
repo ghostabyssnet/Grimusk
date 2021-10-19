@@ -68,6 +68,7 @@ def _div(instr, ram, cpu):
 
 # AND: is equal
 def _and(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('AND called: checking if ', ram.data[instr[1]], ' is equal to ', ram.data[instr[2]], '.')
 	if (ram.data[instr[1]] == ram.data[instr[2]]): g._lda_ac(1, cpu) # stores 1 (true) to AC
 	# an implementation without == would be (x + y == 0) or something similar
 	# as seen in C64
@@ -75,11 +76,13 @@ def _and(instr, ram, cpu):
 
 # XOR: is not equal
 def _xor(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('OR called: checking if ', ram.data[instr[1]], ' is not equal to ', ram.data[instr[2]], '.')
 	if (ram.data[instr[1]] != ram.data[instr[2]]): g._lda_ac(1, cpu) # stores 1 (true) to AC
 	# 0 = opcode; 1 = value;
 
 # NOT: reverse/negative of
 def _not(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('NOT called: reversing ', ram.data[instr[1]], '.')
 	g._lda_ac((int(ram.data[instr[1]])))
 	g._stabuf((- cpu.ac), instr[2], ram) # stores inverse to dest
 	# 0 = opcode; 1 = addr1; 2 = dest;
@@ -90,17 +93,20 @@ def _mov(instr, ram, cpu):
 
 # BGR: is bigger than
 def _bgr(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('AND called: checking if ', ram.data[instr[1]], ' is bigger than ', ram.data[instr[2]], '.')
 	if (ram.data[instr[1]] > ram.data[instr[2]]): g._lda_ac(1, cpu)
 	# 0 = opcode; 1 = addr1; 2 = addr2;
 
 # SMR: is smaller than
 def _smr(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('AND called: checking if ', ram.data[instr[1]], ' is smaller than ', ram.data[instr[2]], '.')
 	if (ram.data[instr[1]] < ram.data[instr[2]]): g._lda_ac(1, cpu)
 	# 0 = opcode; 1 = addr1; 2 = addr2;
 
 # JIF: will jump if AC = 1 (true)
 # this instruction is pipelined (is_word == 1)
 def _jif(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('JIF called: jumping if AC is 1 (AC = ', cpu.ac, ')')
 	if (cpu.ac == 1): 
 		g._lda(instr, ram, cpu)
 		_jmp_ac(cpu)
