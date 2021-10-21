@@ -11,6 +11,7 @@ import embed as e
 # SWP: swap values between themselves using AC
 # opcode, value1, value2, unused, 0
 def _swp(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('SWP called: swapping ', ram.data[instr[1]], ' and ', ram.data[instr[2]], '.')
 	g._lda(instr, ram, cpu) # loads instr[1] to AC
 	g._stabuf(ram.data[instr[2]], instr[1], ram) # sets data at [1] to data from [2]
 	g._stabuf(cpu.ac, instr[2], ram) # sets data at [2] to data from AC
@@ -21,6 +22,7 @@ def _swp(instr, ram, cpu):
 # neg fib should be defined as NOT (fib). they're mirrored
 # make sure alloc_start is 0 before (use STA)
 def _fib(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('FIB called.')
 	if (ram.data[instr[1]] == 0 or ram.data[instr[1]] == 1):
 		g._lda_ac(ram.data[instr[1]], cpu)
 		return
@@ -34,14 +36,15 @@ def _fib(instr, ram, cpu):
 		# we could use MQ for this but to be honest idk if that would be legitimate
 	if ram.data[instr[2]] <= ram.data[instr[1]]: # count until limit
 		g._lda_ac((ram.data[instr[2+2]] + ram.data[instr[2+1]]), cpu)
-		g._ram.data[instr[2+2]] = ram.data[instr[2+1]]
+		g._stabuf(ram.data[instr[2+1]], instr[2+2], ram)
 		g._stabuf(cpu.ac, (instr[2] + 1), ram)
-		g._stabuf((ram.data[instr[2]] + 1), ram.data[instr[2]], ram) 
+		g._stabuf((ram.data[instr[2]] + 1), instr[2], ram) 
 		_fib(instr, ram, cpu)
 
 # POWer of
 # opcode, value, times, unused, 1
 def _pow(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('POW called.')
 	if ram.data[instr[2]] == 0:
 		g._lda_ac(1, cpu)
 		return
@@ -52,7 +55,7 @@ def _pow(instr, ram, cpu):
 		cpu.ac = ram.data[instr[1]]
 	cpu.mq += 1
 	if cpu.mq <= ram.data[instr[2]]:
-		_sum_ac(cpu.ac, ram.data[instr[1]], cpu)
+		g._sum_ac(cpu.ac, cpu.ac, cpu)
 		_pow(instr, ram, cpu)
 	else:
 		cpu.mq = 0
@@ -63,6 +66,7 @@ def _pow(instr, ram, cpu):
 # using the CORDIC method:
 # https://www.convict.lu/Jeunes/Math/square_root_CORDIC.htm
 def _sqr(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('SQRT called.')
 	if cpu.mq == 0:
 		g._stabuf(128, (instr[2] + 1), ram)
 		g._stabuf(0, (instr[2] + 2), ram)
@@ -75,7 +79,7 @@ def _sqr(instr, ram, cpu):
 			g._stabuf((ram.data[instr[2] + 2] - ram.data[instr[2] + 1]), (instr[2] + 1), ram)
 		g._stabuf((ram.data[instr[2] + 1] / 2), (instr[2] + 1), ram) # same issue as above
 		# we could also use _div() but it would take some annoyance to do
-		g._lda_ac(ram.data[instr[2] + 2]) # store in AC
+		g._lda_ac(ram.data[instr[2] + 2], cpu) # store in AC
 	else:
 		cpu.mq = 0
 
@@ -84,6 +88,7 @@ def _sqr(instr, ram, cpu):
 # used to define constant system variables like array heads
 # opcode, targetaddr, 0, 0, 0
 def _chr(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('CHR called. Setting ', instr[1], ' to const char.')
 	g._stabuf("__const", instr[1], ram) # saves __const into addr[1]
 	# we could convert this to binary or int and add flags to make it more realistic but why bother
 
@@ -93,14 +98,15 @@ def _chr(instr, ram, cpu):
 # of course we have malloc to use this properly later on, as the C language did (eventually)
 # opcode, start_addr, size, 0, 1
 def _arr(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('ARRAY called.')
 	if cpu.mq == 0: # using cpu.mq because we don't have access to other registers yet (TP2?)
-		_chr(instr, ram, cpu) # store __const to start_addr (addr[0])
 		g._stabuf(ram.data[instr[2]], (instr[1] + 1), ram) # sets addr[1] as SIZEOF 
 		g._lda_ac(instr[1] + 2) # set AC to address[n + 2], after __const and SIZEOF
+		_chr(instr, ram, cpu) # store __const to start_addr (addr[0])
 	cpu.mq += 1
 	if cpu.mq <= ram.data[instr[2]]:
 		g._stabuf(0, cpu.ac, ram) # store 0 into addr[AC]
-		g._sum_ac(ac, 1, cpu) # adds 1 to AC
+		g._sum_ac(cpu.ac, 1, cpu) # adds 1 to AC
 		_arr(instr, ram, cpu) # calls itself recursively until it fills the array
 	else:
 		cpu.mq = 0
@@ -123,12 +129,14 @@ def _qrt(instr, ram, cpu):
 
 def _xld(instr, ram, cpu):
 	cpu.ac = ram.data[instr[1]]
+	if g.LOG_CONSOLE: print('LDA called: value ', cpu.ac, ' loaded from addr[', instr[1], ']')
 	# 0 = payload; 1 = addr
 
 def _xldbuf(addr, ram, cpu):
 	cpu.ac = ram.data[addr]
 	
 def _xst(instr, ram, cpu):
+	if g.LOG_CONSOLE: print('XST called: value ', cpu.ac, ' saved in addr[', instr[1], ']')
 	ram.data[instr[1]] = cpu.ac
 	# 0 = payload; 1 = addr
 
@@ -139,17 +147,19 @@ def _xst(instr, ram, cpu):
 # formula: (ac = LDA addr1) + val addr2 -> ac
 # material em portugues: https://www.lnaffah.com/oc2013-1/material/Organizacao_Processador_Neander.pdf
 def _xsm(instr, ram, cpu):
-	cpu.ac = _xldbuf(instr[1])
+	_xldbuf(instr[1], ram, cpu)
 	# as you can see, we'll also rely less on python and more on our own functions
 	ram_b = ram.data[instr[2]]
-	cpu.ac += ram_b # '+' can be treated as a half-adder or a full-adder
+	cpu.ac = cpu.ac + ram_b # '+' can be treated as a half-adder or a full-adder
 	# ac is now loaded with (a + b). STA should store it wherever our instr[3] would be
+	if g.LOG_CONSOLE: print('SUM called: ', ram.data[instr[1]], '[', instr[1], '] + ', ram.data[instr[2]], '[', instr[2], '] = ', cpu.ac, '.')
 	# 0 = payload; 1 = addr1; 2 = addr2;
 
 def _xsb(instr, ram, cpu):
-	cpu.ac = _xldbuf(instr[1])
+	_xldbuf(instr[1], ram, cpu)
 	ram_b = ram.data[instr[2]]
-	cpu.ac -= ram_b
+	cpu.ac = cpu.ac - ram_b
+	if g.LOG_CONSOLE: print('SUB called: ', ram.data[instr[1]], '[', instr[1], '] - ', ram.data[instr[2]], '[', instr[2], '] = ', cpu.ac, '.')
 	# 0 = payload; 1 = addr1; 2 = addr2;
 
 def _xnd(instr, ram):

@@ -23,21 +23,22 @@ def _jmp_ac(cpu): # JMP using AC value, more realistic
 # MULtiply
 def _mul(instr, ram, cpu):
 	if cpu.mq == 0:
-		_lda_ac(0, cpu) # sets AC to 0
+		cpu.mq += 1
+		g._lda_ac(ram.data[instr[1]], cpu) # sets AC to 0
 		if ram.data[instr[1]] == 0 or ram.data[instr[2]] == 0:
-			g._stabuf(0, instr[3], ram)
+			g._lda_ac(0, cpu)
 			return
 		if ram.data[instr[1]] == 1:
-			g._stabuf(ram.data[instr[2]], instr[3], ram)
+			g._lda_ac(ram.data[instr[2]], cpu)
 			return
 		if ram.data[instr[2]] == 1:
-			g._stabuf(ram.data[instr[1]], instr[3], ram)
+			g._lda_ac(ram.data[instr[1]], cpu)
 			return
 	cpu.mq += 1
-	if (ram.data[instr[2]] <= cpu.mq):
+	if (cpu.mq <= ram.data[instr[2]]):
 		old = cpu.ac
-		g._sum(instr, ram, cpu) # adds 1 and 2, stores in AC
-		if g.LOG_CONSOLE: print('MUL called: ', old, ' + ', ram.data[instr[1]], ' = ', cpu.ac, '. (', ram.data[instr[2]], ' remaining)')
+		g._lda_ac(cpu.ac + ram.data[instr[1]], cpu) # adds AC and addr2, stores in AC
+		if g.LOG_CONSOLE: print('MUL called: ', old, ' + ', ram.data[instr[1]], ' = ', cpu.ac, '. (', cpu.mq, '/', ram.data[instr[2]], ' done)')
 		_mul(instr, ram, cpu)
 	else:
 		cpu.mq = 0
@@ -47,22 +48,24 @@ def _mul(instr, ram, cpu):
 # opcode, addr1, addr2, unused, 1
 def _div(instr, ram, cpu):
 	if cpu.mq == 0:
-		_lda_ac(ram.data[instr[1]], cpu) # sends instr[1] value to AC
+		g._lda_ac(ram.data[instr[1]], cpu) # sends instr[1] value to AC
 		if ram.data[instr[1]] == 0 or ram.data[instr[2]] == 0:
 			return
 		if ram.data[instr[1]] == 1:
-			g._stabuf(ram.data[instr[2]], cpu.ac, ram)
+			g._lda_ac(ram.data[instr[2]], cpu)
 			return
 		if ram.data[instr[2]] == 1:
-			g._stabuf(ram.data[instr[1]], cpu.ac, ram)
+			g._lda_ac(ram.data[instr[1]], cpu)
 			return
 	cpu.mq += 1
 	if (cpu.ac >= ram.data[instr[2]]):
 		old = cpu.ac
-		g._sub(instr, ram, cpu) # reduces 1 by 2, stores in AC
-		if g.LOG_CONSOLE: print('DIV called: ', old, ' - ', ram.data[instr[2]], ' = ', cpu.ac, '.')
+		g._lda_ac(cpu.ac - ram.data[instr[2]], cpu) # reduces AC by addr2, stores in AC
+		if g.LOG_CONSOLE: print('DIV called: ', old, ' - ', ram.data[instr[2]], ' = ', cpu.ac, '.', cpu.mq)
 		_div(instr, ram, cpu)
 	else:
+		cpu.ac = cpu.mq - 1 # final number is times ran - 1
+		if g.LOG_CONSOLE: print('DIV result: ', cpu.ac, '.')
 		cpu.mq = 0
 		return
 
@@ -83,7 +86,7 @@ def _xor(instr, ram, cpu):
 # NOT: reverse/negative of
 def _not(instr, ram, cpu):
 	if g.LOG_CONSOLE: print('NOT called: reversing ', ram.data[instr[1]], '.')
-	g._lda_ac((int(ram.data[instr[1]])))
+	g._lda_ac((int(ram.data[instr[1]])), cpu) # loads to AC
 	g._stabuf((- cpu.ac), instr[2], ram) # stores inverse to dest
 	# 0 = opcode; 1 = addr1; 2 = dest;
 
@@ -93,13 +96,13 @@ def _mov(instr, ram, cpu):
 
 # BGR: is bigger than
 def _bgr(instr, ram, cpu):
-	if g.LOG_CONSOLE: print('AND called: checking if ', ram.data[instr[1]], ' is bigger than ', ram.data[instr[2]], '.')
+	if g.LOG_CONSOLE: print('BGR called: checking if ', ram.data[instr[1]], ' is bigger than ', ram.data[instr[2]], '.')
 	if (ram.data[instr[1]] > ram.data[instr[2]]): g._lda_ac(1, cpu)
 	# 0 = opcode; 1 = addr1; 2 = addr2;
 
 # SMR: is smaller than
 def _smr(instr, ram, cpu):
-	if g.LOG_CONSOLE: print('AND called: checking if ', ram.data[instr[1]], ' is smaller than ', ram.data[instr[2]], '.')
+	if g.LOG_CONSOLE: print('SMR called: checking if ', ram.data[instr[1]], ' is smaller than ', ram.data[instr[2]], '.')
 	if (ram.data[instr[1]] < ram.data[instr[2]]): g._lda_ac(1, cpu)
 	# 0 = opcode; 1 = addr1; 2 = addr2;
 

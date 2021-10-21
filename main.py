@@ -10,53 +10,39 @@ import stdlib as std
 # TODO: if we doing visualizer, watching stuff as hex would be cool
 
 # TODO:
-# opcodes
-# 	[x] 5
-# 	 	[x] mul(0), mul(1)
-# 	[x] 6
-# 	 	[x] div(0), div(1)
-# 	[x] 8
-# 	[x] 9
-# 	[x] 10
-# 	[x] 11
-# 	[x] 12
-# 	[x] 13
-# 	[x] 14
-# 	[ ] 15
-# 	[ ] 16
-# 	[ ] 17
 # [x] LDA is pipelined (c64 asm)
+# [ ] fix fibonnaci
 # [ ] save log to file
 # [x] load from file
 # [x] tests
 # [ ] error when trying to alloc > MAX_RAM
 # [ ] ignore csv comments
-# [ ] implement AC
+# [x] implement AC
 # [ ] halt throws to menu
-# [ ] write sample programs
+# [x] write sample programs
 # [ ] grimusk program writer
 # [ ] G language
 # [ ] i/o
 # [ ] visualizer
 
 # test cases
-# HLT & 0 
-# STA & 1 
-# LDA & 2 
-# SUM & 3 
-# SUB & 4 
-# MUL & 5 
-# DIV & 6 
-# AND & 7 
-# XOR & 8 
-# NOT & 9 
-# MOV & 10
-# BGR & 11
-# SMR & 12
-# JIF & 13
-# JMP & 14
-# SWP & 15
-# FIB & 16
+# x HLT & 0 
+# x STA & 1 
+# x LDA & 2 
+# x SUM & 3 
+# x SUB & 4 
+# x MUL & 5 
+# x DIV & 6 
+# x AND & 7 
+# x XOR & 8 
+# x NOT & 9 
+# ! MOV & 10
+# x BGR & 11
+# x SMR & 12
+# x JIF & 13
+# x JMP & 14
+# x SWP & 15
+# ! FIB & 16
 # POW & 17
 # SQR & 18
 # CHR & 19
@@ -107,7 +93,7 @@ class opcode(enum.Enum):
 	XST = 22 # c64 sta closer to how it is in assembly
 	XSM = 23 # c64 sum closer to how it is in assembly
 	XSB = 24 # c64 sub closer to how it is in assembly
-	# XND = 25 -- we'll continue c64 if there's any interest on it
+	# XND = [...] we'll continue c64 if there's any interest on it
 	
 	# everything below is from muskOS
 	# stdio
@@ -237,54 +223,109 @@ def process(instr, ram, cpu):
 		return 
 	
 	elif op == opcode.STA.value:
-		g._sta(instr, ram)
+		g._sta(instr, ram, cpu)
 		
 	elif op == opcode.LDA.value:
-		g._lda(instr, ram)
+		g._lda(instr, ram, cpu)
 	
 	elif op == opcode.SUM.value:
-		g._sum(instr, ram)
+		g._sum(instr, ram, cpu)
 	
 	elif op == opcode.SUB.value:
-		g._sub(instr, ram)
+		g._sub(instr, ram, cpu)
 		
 	# embed library
 	elif op == opcode.MUL.value:
-		e._mul(instr, ram)
+		e._mul(instr, ram, cpu)
+		
+	elif op == opcode.DIV.value:
+		e._div(instr, ram, cpu)
+		
+	elif op == opcode.AND.value:
+		e._and(instr, ram, cpu)
+	
+	elif op == opcode.XOR.value:
+		e._xor(instr, ram, cpu)
+	
+	elif op == opcode.BGR.value:
+		e._bgr(instr, ram, cpu)
+		
+	elif op == opcode.SMR.value:
+		e._smr(instr, ram, cpu)
+	
+	elif op == opcode.NOT.value:
+		e._not(instr, ram, cpu)
+		
+	elif op == opcode.MOV.value:
+		return # to be implemented w/ new registers
+		
+	elif op == opcode.JIF.value:
+		e._jif(instr, ram, cpu)
+		
+	elif op == opcode.JMP.value:
+		e._jmp(instr)
+		
+	# stdlib
+	elif op == opcode.SWP.value:
+		std._swp(instr, ram, cpu)
+		
+	elif op == opcode.FIB.value:
+		std._fib(instr, ram, cpu)
+		
+	elif op == opcode.POW.value:
+		std._pow(instr, ram, cpu)
+		
+	elif op == opcode.SQR.value:
+		std._sqr(instr, ram, cpu)
+		
+	elif op == opcode.CHR.value:
+		std._chr(instr, ram, cpu)
+		
+	elif op == opcode.ARR.value:
+		std._arr(instr, ram, cpu)
+		
+	elif op == opcode.XLD.value:
+		std._xld(instr, ram, cpu)
+		
+	elif op == opcode.XST.value:
+		std._xst(instr, ram, cpu)
+		
+	elif op == opcode.XSM.value:
+		std._xsm(instr, ram, cpu)
+		
+	elif op == opcode.XSB.value:
+		std._xsb(instr, ram, cpu)
 
 # TODO: test this 
 # starts CPU and procs every command
 # stored in (ram) 
 def processor(ram):
 	cpu = cpu_t()
-	pc = cpu.pc
-	ac = cpu.ac
-	mbr = cpu.mbr
 	# this should be while(true) due to a machine not shutting
 	# down when it doesn't have any more instructions. implement
 	# it later?
 	# or maybe only if we implement some kind of operating system
-	while(pc < len(ram.instr)):
+	while(cpu.pc < len(ram.instr)):
 		# while we have instructions, our processor will
 		# evaluate them
-		pc += 1
-		mbr = ram.instr[pc]
-		is_word = mbr[4]
+		cpu.pc += 1
+		cpu.mbr = ram.instr[cpu.pc]
+		is_word = cpu.mbr[4]
 		# is_word defines if we should pipeline between this and the last instruction
 		# it's considerably more complicated in a real machine, thus grimusk does it the simple way:
 		# it treats the last byte as a boolean. if it's 1, then AC doesn't reset.
 		# AC will always reset on simple instructions that don't require pipelining
 		if is_word != 1:
-			ac = 0
-		if g.LOG_CONSOLE: print('Running new instruction. PC: ', pc)
+			cpu.ac = 0
+		if g.LOG_CONSOLE: print('Running new instruction. PC: ', cpu.pc)
 		# halt if called:
-		if mbr[0] == opcode.HLT.value:
+		if cpu.mbr[0] == opcode.HLT.value:
 			if g.LOG_CONSOLE: print('HLT called: machine stopped')
 			return # halt the machine
 		# 
-		if mbr[0] == opcode.JMP.value:
-			pc = e._jmp(ram.instr[pc]) # jumps to the defined location in memory
-		process(mbr, ram, ac)
+		if cpu.mbr[0] == opcode.JMP.value:
+			cpu.pc = e._jmp(ram.instr[cpu.pc]) # jumps to the defined location in memory
+		process(cpu.mbr, ram, cpu)
 		if g.CHECK_MEMORY == True:
 			g._check_memory(ram, MAX_RAM)
 		if g.SYS_STEPS == True:
