@@ -55,7 +55,7 @@ import stdlib as std
 
 # const
 
-MAX_RAM = 1024 # 1024b, change it to whatever you want as long as it divides by 2 (binary!)
+MAX_RAM = 1024 # 1024 "bytes", change it to whatever you want as long as it divides by 2 (binary!)
 
 # enum & utility functions
 
