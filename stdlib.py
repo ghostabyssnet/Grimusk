@@ -31,12 +31,12 @@ def _fib(instr, ram, cpu):
 		return
 	if ram.data[instr[2]] == 0:
 		g._stabuf(2, instr[2], ram) # make sure we start at 2
-		g._stabuf(1, (instr[2] + 1), ram) # allocate another byte
-		g._stabuf(0, (instr[2] + 2), ram) # allocate another byte
+		g._stabuf(1, instr[2] + 1, ram) # allocate another byte
+		g._stabuf(0, instr[2] + 2, ram) # allocate another byte
 		# we could use MQ for this but to be honest idk if that would be legitimate
 	if ram.data[instr[2]] <= ram.data[instr[1]]: # count until limit
-		g._lda_ac((ram.data[instr[2+2]] + ram.data[instr[2+1]]), cpu)
-		g._stabuf(ram.data[instr[2+1]], instr[2+2], ram)
+		g._lda_ac((ram.data[instr[2] + 2] + ram.data[instr[2] + 1]), cpu)
+		g._stabuf(ram.data[instr[2] + 1], instr[2] + 2, ram)
 		g._stabuf(cpu.ac, (instr[2] + 1), ram)
 		g._stabuf((ram.data[instr[2]] + 1), instr[2], ram) 
 		_fib(instr, ram, cpu)
@@ -46,13 +46,13 @@ def _fib(instr, ram, cpu):
 def _pow(instr, ram, cpu):
 	if g.LOG_CONSOLE: print('POW called.')
 	if ram.data[instr[2]] == 0:
-		g._lda_ac(1, cpu)
+		g._lda_ac(1, cpu) # 0 returns 1
 		return
 	if ram.data[instr[2]] == 1:
-		g._lda_ac(ram.data[instr[1]], cpu)
+		g._lda_ac(ram.data[instr[1]], cpu) # 1 returns itself
 		return
 	if cpu.mq == 0:
-		cpu.ac = ram.data[instr[1]]
+		cpu.ac = ram.data[instr[1]] # load instr1 to AC
 	cpu.mq += 1
 	if cpu.mq <= ram.data[instr[2]]:
 		g._sum_ac(cpu.ac, cpu.ac, cpu)
@@ -68,18 +68,19 @@ def _pow(instr, ram, cpu):
 def _sqr(instr, ram, cpu):
 	if g.LOG_CONSOLE: print('SQRT called.')
 	if cpu.mq == 0:
-		g._stabuf(128, (instr[2] + 1), ram)
-		g._stabuf(0, (instr[2] + 2), ram)
+		g._stabuf(128, instr[2] + 1, ram) # \base
+		g._stabuf(0, instr[2] + 2, ram) # \y
 	cpu.mq += 1
 	if cpu.mq <= 8:
-		g._stabuf(ram.data[instr[2] + 1], (instr[2] + 2), ram)
+		g._sumbuf(ram.data[instr[2] + 1], ram.data[instr[2] + 2], instr[2] + 2, ram) # \store to y
 		if ((ram.data[instr[2] + 2] * ram.data[instr[2] + 2]) > ram.data[instr[1]]):
 			# we could also use _pow() to do this, but it would require some payload
 			# conversion that would be annoying to do, as _pow() takes a different set of instr 
-			g._stabuf((ram.data[instr[2] + 2] - ram.data[instr[2] + 1]), (instr[2] + 1), ram)
-		g._stabuf((ram.data[instr[2] + 1] / 2), (instr[2] + 1), ram) # same issue as above
+			g._stabuf((ram.data[instr[2] + 2] - ram.data[instr[2] + 1]), instr[2] + 2, ram) # \y -= base
+		g._stabuf((ram.data[instr[2] + 1] / 2), instr[2] + 1, ram) # same issue as above
 		# we could also use _div() but it would take some annoyance to do
 		g._lda_ac(ram.data[instr[2] + 2], cpu) # store in AC
+		_sqr(instr, ram, cpu)
 	else:
 		cpu.mq = 0
 
@@ -100,10 +101,15 @@ def _chr(instr, ram, cpu):
 def _arr(instr, ram, cpu):
 	if g.LOG_CONSOLE: print('ARRAY called.')
 	if cpu.mq == 0: # using cpu.mq because we don't have access to other registers yet (TP2?)
+		instr[3] = ram.data[instr[2]] # trying to fix an undefined behavior bug
 		g._stabuf(ram.data[instr[2]], (instr[1] + 1), ram) # sets addr[1] as SIZEOF 
-		g._lda_ac(instr[1] + 2) # set AC to address[n + 2], after __const and SIZEOF
+		g._lda_ac(ram.data[instr[1] + 2], cpu) # set AC to address[n + 2], after __const and SIZEOF
 		_chr(instr, ram, cpu) # store __const to start_addr (addr[0])
 	cpu.mq += 1
+	if ram.data[instr[2]] != instr[3]:
+		ram.data[instr[2]] = instr[3] # I have no idea why this is needed tbh
+		# but instr[2] keeps reseting itself to 0
+	print(ram.data[instr[2]])
 	if cpu.mq <= ram.data[instr[2]]:
 		g._stabuf(0, cpu.ac, ram) # store 0 into addr[AC]
 		g._sum_ac(cpu.ac, 1, cpu) # adds 1 to AC
@@ -127,16 +133,19 @@ def _qrt(instr, ram, cpu):
 # c64 asm
 # -------
 
+# in the end we pretty much implemented everything here to grimusk itself
+# I personally think c64 was very elegant for its time
+
 def _xld(instr, ram, cpu):
 	cpu.ac = ram.data[instr[1]]
-	if g.LOG_CONSOLE: print('LDA called: value ', cpu.ac, ' loaded from addr[', instr[1], ']')
+	if g.LOG_CONSOLE: print('C64 LDA called: value ', cpu.ac, ' loaded from addr[', instr[1], ']')
 	# 0 = payload; 1 = addr
 
 def _xldbuf(addr, ram, cpu):
 	cpu.ac = ram.data[addr]
 	
 def _xst(instr, ram, cpu):
-	if g.LOG_CONSOLE: print('XST called: value ', cpu.ac, ' saved in addr[', instr[1], ']')
+	if g.LOG_CONSOLE: print('C64 STA called: value ', cpu.ac, ' saved in addr[', instr[1], ']')
 	ram.data[instr[1]] = cpu.ac
 	# 0 = payload; 1 = addr
 
@@ -152,16 +161,17 @@ def _xsm(instr, ram, cpu):
 	ram_b = ram.data[instr[2]]
 	cpu.ac = cpu.ac + ram_b # '+' can be treated as a half-adder or a full-adder
 	# ac is now loaded with (a + b). STA should store it wherever our instr[3] would be
-	if g.LOG_CONSOLE: print('SUM called: ', ram.data[instr[1]], '[', instr[1], '] + ', ram.data[instr[2]], '[', instr[2], '] = ', cpu.ac, '.')
+	if g.LOG_CONSOLE: print('C64 SUM called: ', ram.data[instr[1]], '[', instr[1], '] + ', ram.data[instr[2]], '[', instr[2], '] = ', cpu.ac, '.')
 	# 0 = payload; 1 = addr1; 2 = addr2;
 
 def _xsb(instr, ram, cpu):
 	_xldbuf(instr[1], ram, cpu)
 	ram_b = ram.data[instr[2]]
 	cpu.ac = cpu.ac - ram_b
-	if g.LOG_CONSOLE: print('SUB called: ', ram.data[instr[1]], '[', instr[1], '] - ', ram.data[instr[2]], '[', instr[2], '] = ', cpu.ac, '.')
+	if g.LOG_CONSOLE: print('C64 SUB called: ', ram.data[instr[1]], '[', instr[1], '] - ', ram.data[instr[2]], '[', instr[2], '] = ', cpu.ac, '.')
 	# 0 = payload; 1 = addr1; 2 = addr2;
 
+# deprecated
 def _xnd(instr, ram):
 	# closer to old C64 assembly: if x - y = 0, they're equal
 	# yes, x - (-y) will be x + y, however, negative numbers in binary

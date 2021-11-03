@@ -11,12 +11,12 @@ import stdlib as std
 
 # TODO:
 # [x] LDA is pipelined (c64 asm)
-# [ ] fix fibonnaci
+# [x] fix fibonnaci
 # [ ] save log to file
 # [x] load from file
 # [x] tests
 # [ ] error when trying to alloc > MAX_RAM
-# [ ] ignore csv comments
+# [ ] ignore csv comments => do this and change from csv to .ins
 # [x] implement AC
 # [ ] halt throws to menu
 # [x] write sample programs
@@ -36,21 +36,21 @@ import stdlib as std
 # x AND & 7 
 # x XOR & 8 
 # x NOT & 9 
-# ! MOV & 10
+# ! MOV & 10 >> moved to TP2 (memory caching and multiple registers) 
 # x BGR & 11
 # x SMR & 12
 # x JIF & 13
 # x JMP & 14
 # x SWP & 15
-# ! FIB & 16
-# POW & 17
-# SQR & 18
-# CHR & 19
-# ARR & 20
-# XLD & 21
-# XST & 22
-# XSM & 23
-# XSB & 24
+# x FIB & 16
+# x POW & 17
+# x SQR & 18
+# x CHR & 19
+# x ARR & 20
+# x XLD & 21
+# x XST & 22
+# x XSM & 23
+# x XSB & 24
 
 
 # const
@@ -111,10 +111,10 @@ class opcode(enum.Enum):
 	# note to professor: we want muskOS to do caching instead of grimusk itself, 
 	# as unix/linux/macOS/windows generally does
 	# let's ask him
-	MALLOC = 34 # malloc from addr1 to addr2 name [3] (allocates (addr1+addr2)-1 bytes)
+	MALLOC = 34 # malloc() from addr1 to addr2 name [3] (allocates (addr1+addr2)-1 bytes)
 	# addr1: [3]
 	# addr1+1 to addr2: mallocd
-	FREE = 35 # free from addr1 to addr3
+	FREE = 35 # free() from addr1 to addr3
 	IF = 36 # JIF renamed
 	ELSE = 37 # notJIF
 	ABORT = 38 # abort program
@@ -128,9 +128,18 @@ class opcode(enum.Enum):
 	BIN = 46 # tobinary
 	HEX = 47 # tohex
 	STR = 48 # tostring
-	# KERNELPANIC = 49
+	BITR = 49 # bitshift to the right (>>)
+	BITL = 50 # bitshift to the left (<<)
+	# PANIC = 50 # kernel panic
+	
+	# everything below is from the console testing suite library
+	# it will probably be deprecated after we implement muskOS,
+	# ncurses and an actual screen
+	# PRINT = 90 # print to console
+	# LOG = 91 # log to file
+	# ASSERT = 91 # assert value, used for testing
 	# ------------------------------------------
-	LEN = 48 # length of opcode, used internally
+	LEN = 24 # length of opcode, used internally
 	# ------------------------------------------
 
 # note to programmers:
@@ -309,7 +318,7 @@ def processor(ram):
 		# while we have instructions, our processor will
 		# evaluate them
 		cpu.pc += 1
-		cpu.mbr = ram.instr[cpu.pc]
+		cpu.mbr = ram.instr[cpu.pc] # sends instruction to MBR
 		is_word = cpu.mbr[4]
 		# is_word defines if we should pipeline between this and the last instruction
 		# it's considerably more complicated in a real machine, thus grimusk does it the simple way:
@@ -370,8 +379,8 @@ def machine_from_file():
 # rand machine
 def random_machine():
 	ram = ram_t()
-	ram.data = r.apply_ram(MAX_RAM)
-	ram.instr = r.apply_instr(MAX_RAM, opcode.LEN)
+	ram.data = rnd.apply_ram(MAX_RAM)
+	ram.instr = rnd.apply_instr(MAX_RAM, opcode.LEN)
 	# montarRam() done
 	run_machine(ram)
 
@@ -390,7 +399,7 @@ def run_machine(ram):
 	processor(ram)
 	
 def main():
-	print('---------- bcc266 ----------')	
+	print('---------- bcc266 ----------')
 	print('grimusk: computer simulation')
 	print('----------------------------')
 	print('')
@@ -401,8 +410,7 @@ def main():
 	if (x == '1'):
 		machine_from_file()
 	else:
-		pass
-		# random_machine()
+		random_machine()
 
 
 main()
